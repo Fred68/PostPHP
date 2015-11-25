@@ -99,7 +99,7 @@ namespace PostPHP
 			}
 		#endregion
 		#region COSTRUTTORI E IMPOSTAZIONE
-		public Connessione()															// Costruttore
+		public Connessione()														// Costruttore
 			{
 			ImpostaParametri("", "", "", "", default_timer);
 			}
@@ -129,7 +129,7 @@ namespace PostPHP
 		#region FUNZIONI PROTETTE
 		protected void OnTimedEvent(Object source, ElapsedEventArgs e)				// Per refresh
 			{
-			EseguiRefresh();															// Esegue un refresh
+			EseguiRefresh();														// Esegue un refresh
 			}
 		protected string EncryptMsg(string txt)										// Codifica messaggio con aes in base64
 			{
@@ -242,7 +242,9 @@ namespace PostPHP
 				}
 			return ok;
 #warning ATTENZIONE: eseguendo ExecutePHP senza fare il login, la risposta PHP è Utente disconnesso, ma non si genera errore.
-			}
+#warning ATTENZIONE: eseguendo un secondo login, si crea una nuova connessione (che fallisce) senza chiudere la vecchia, che però viene perduta.
+#warning ATTENZIONE: eseguire una risposta di convalida del login, possibilmente criptata.
+            }
 		protected bool ExecutePHPcmdAsync(string command,string par1="",string par2="")	// Esecuzione asincrona comando dalla pagina PHP
 			{
 			bool ok = false;
@@ -308,7 +310,7 @@ namespace PostPHP
 				if(refrsp.Length > 0)													// Se risposta non nulla = timeout, non connesso...
 					{
 					refreshTimer.Stop();												// Ferma il timer e aggiuge il messaggio di errore
-					AddErrorMessage(string.Format("Errore durante il refresh: {0}", phpmsg.rsp));
+					AddErrorMessage(string.Format("Errore durante il refresh:\n{0}", phpmsg.rsp));
 					}
 				}
 			catch(Exception ex)
@@ -326,12 +328,50 @@ namespace PostPHP
 			bool ok = ExecutePHPcmd("login", this.user, this.password);			// Esegue login
 			if((ok == true) && (this.Errors == 0))									// Se login ok
 				{
-				refreshTimer.Start();												// Avvia il timer
-				EseguiRefresh();													// Esegue subito il refresh
+				refreshTimer.Start();											// Avvia il timer
 				}
+            else                                                                // Se problemi
+                {                                                               // azzera il flag ed eswegue comunque un logout
+                ok = false;
+                ExecutePHPcmd("logout");
+                }
+            if(ok)
+                {
+                bool bok=false;
+                string firstline ="";
+                int indx;
+                indx = this.phpmsg.rsp.IndexOf("\n");                           // Cerca il primo newline
+                if (indx != -1)                                                 // Se lo trova, taglia la prima riga
+                    {
+                    firstline = this.phpmsg.rsp.Substring(0, indx);
+                    this.phpmsg.rsp = this.phpmsg.rsp.Substring(indx+1);
+                    this.phpmsg.errList.Add("Firstline: "+firstline);
+                    }
+                string dec_msg = DecryptMsg(this.phpmsg.rsp, ref bok);	           // Decodifica il messaggio del login (senza la prima riga)
+                if (bok)
+                    this.phpmsg.rsp = firstline + Environment.NewLine + dec_msg;      // Se  tutto ok, lo sostituisce nella risposta
+                else
+                    this.phpmsg.errList.Add("Fallita decrittazione risposta del login");
+                }
 			return ok;
 			}
-		public bool Logout()										// Esegue logout e disattiva il refresh
+        public bool ClearLogged()
+            {
+            ResetMessagesAndErrors();
+            bool ok = ExecutePHPcmd("clearlogged", this.user, this.password);         // Esegue login
+            if ((ok == true) && (this.Errors == 0))                                 // Se login ok
+                {
+                refreshTimer.Start();                                           // Avvia il timer
+                }
+            else                                                                // Se problemi
+                {                                                               // ezzera il flag ed eswegue comunque un logout
+                ok = false;
+                ExecutePHPcmd("logout");
+                }
+            return ok;
+
+            }
+        public bool Logout()										// Esegue logout e disattiva il refresh
 			{
 			ResetMessagesAndErrors();
 			bool ok = ExecutePHPcmd("logout");

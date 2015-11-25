@@ -37,10 +37,10 @@ namespace PostPHP
 			password = "antani";
 			key = "12345678901234567890123456789012";
 			// pluto blinda 21098765432109876543210987654321
-			url = "http://127.0.0.1/Prova%20PHP/command.php";
+			url = "http://localhost/webpage/command.php";
 			conn = new Connessione();
 
-			this.lb_queries.Items.Add("SELECT aID, nome FROM att");
+			this.lb_queries.Items.Add("SELECT ID_att, Nome FROM att");
 			this.lb_queries.Items.Add("SELECT nome FROM att;");
 			this.lb_queries.Items.Add("SELECT aID, nome, dur FROM att WHERE dur>30;");
 			this.lb_queries.Items.Add("SELECT * FROM att");
@@ -171,12 +171,16 @@ namespace PostPHP
 			}
 		private void bt_Login_Click(object sender, EventArgs e)
 			{
-			//conn.ImpostaParametri(this.user, this.password, this.key, "http://127.0.0.1/Prova%20PHP/command.php");
 			conn.ImpostaParametri(this.user, this.password, this.key, this.url);
-			if(!conn.Login())
-				MessageBox.Show("Fallito login!\n"+conn.ConnectionMessages());
-			else
-				MessageBox.Show(conn.ConnectionMessages());
+            if (!conn.Login())
+                {
+                MessageBox.Show("Fallito login!\n" + conn.ConnectionMessages());
+                }
+            else
+                {
+                this.bt_Login.Enabled = false;
+                MessageBox.Show(conn.ConnectionMessages());
+                }
 			return;
 			}
 		private void bt_Status_Click(object sender, EventArgs e)
@@ -187,8 +191,11 @@ namespace PostPHP
 			}
 		private void bt_Logout_Click(object sender, EventArgs e)
 			{
-			conn.Logout();
+            bool ok;
+			ok = conn.Logout();
 			MessageBox.Show(conn.ConnectionMessages());
+            if (ok)
+                this.bt_Login.Enabled = true;
 			}
 		private void bt_Exe_Click(object sender, EventArgs e)
 			{
@@ -241,7 +248,13 @@ namespace PostPHP
 			conn.ProcessMessage("exec");
 			MessageBox.Show(conn.ConnectionMessages());
 			}
-		}
+        private void bt_clearLogged_Click(object sender, EventArgs e)
+            {
+            bool ok;
+            ok = conn.ClearLogged();
+            MessageBox.Show(conn.ConnectionMessages());
+            }
+        }
 	}
 
 
