@@ -171,10 +171,15 @@ namespace PostPHP
 				}
 			return enc;
 			}
-		protected string DecryptMsg(string txt, ref bool ok)						// Decodifica messaggio con aes da base64
+		protected string DecryptMsg(string txt, ref bool ok, string hdgsep="")		// Decodifica messaggio con aes da base64, tagliando eventuale header
 			{																		// usa bool in reference contro conflitti se chiamate asincrone
 			string dec = "";
-			RijndaelManaged aes = new RijndaelManaged();
+            string hdg = "";
+            if(hdgsep.Length>0)
+                {
+                hdg = CutHeader(ref txt, hdgsep) + Environment.NewLine;
+                }
+            RijndaelManaged aes = new RijndaelManaged();
 			aes.KeySize = 256;
 			aes.BlockSize = 256;
 			aes.Padding = PaddingMode.PKCS7;
@@ -218,10 +223,22 @@ namespace PostPHP
 				AddErrorMessage(ex.Message);
 				ok = false;
 				}
-			return dec;
+			return hdg + dec;
 			}
+        protected string CutHeader(ref string txt, string hdgsep)                   // Taglia header e suo separatore hdgsep, e accorcia la stringa
+            {
+            string hdg = "";
+            int indx;
+            indx = txt.IndexOf(hdgsep);
+            if(indx != -1)
+                {
+                hdg = txt.Substring(0, indx);               // Estrae l'header
+                txt = txt.Substring(indx + hdgsep.Length);  // Taglia la parte iniziale ed il separatore di header
+                }
+            return hdg;
+            }
 #warning UNIFORMARE ENCRYPT/DECRYPT: return value bool, string by reference, parametro out o ref.
-		protected bool ExecutePHPcmd(string command,string par1="",string par2="")		// Esecuzione comando dalla pagina PHP (risposta in this.tmp)
+        protected bool ExecutePHPcmd(string command,string par1="",string par2="")		// Esecuzione comando dalla pagina PHP (risposta in this.tmp)
 			{
 			bool ok = false;
 			var values = new NameValueCollection();
@@ -335,23 +352,35 @@ namespace PostPHP
                 ok = false;
                 ExecutePHPcmd("logout");
                 }
-            if(ok)
-                {
+            if(ok)                                                              // Se eseguito correttamente il login...
+                {                                                               // ...legge il messaggio ricevuto al login...
                 bool bok=false;
-                string firstline ="";
-                int indx;
-                indx = this.phpmsg.rsp.IndexOf("\n");                           // Cerca il primo newline
-                if (indx != -1)                                                 // Se lo trova, taglia la prima riga
+
+                string dec_msg = DecryptMsg(this.phpmsg.rsp, ref bok,"*\n*");       // Decodifica il messaggio del login (compreso header prima di Newline)
+                string hdr = CutHeader(ref dec_msg, Environment.NewLine);           // Taglia l'header
+
+                System.Windows.Forms.MessageBox.Show("dec_msg=\n" + dec_msg + "\n" + dec_msg.Length);
+
+                if (dec_msg.Length > 0)
                     {
-                    firstline = this.phpmsg.rsp.Substring(0, indx);
-                    this.phpmsg.rsp = this.phpmsg.rsp.Substring(indx+1);
-                    this.phpmsg.errList.Add("Firstline: "+firstline);
+                    string usr = "***";
+                    string sid = "***";
+
+                    usr = CutHeader(ref dec_msg, "\n");
+                    sid = dec_msg;
+
+                    ResetMessagesAndErrors();                                       // Prosegue comunque, anche se errore di decrittazione
+                    if (!bok)
+                        this.phpmsg.errList.Add("Fallita decrittazione risposta del login");    // Errore dall'operazione precedente
+                    bool enok = ExecutePHPcmd("enable", EncryptMsg(usr), EncryptMsg(sid));      // Invia usr e sID, anche se errati, così ph fa logout
+                    //
+                    // COMPLETARE
+                    //
                     }
-                string dec_msg = DecryptMsg(this.phpmsg.rsp, ref bok);	           // Decodifica il messaggio del login (senza la prima riga)
-                if (bok)
-                    this.phpmsg.rsp = firstline + Environment.NewLine + dec_msg;      // Se  tutto ok, lo sostituisce nella risposta
                 else
-                    this.phpmsg.errList.Add("Fallita decrittazione risposta del login");
+                    {
+                    this.phpmsg.msg = hdr;
+                    }
                 }
 			return ok;
 			}
