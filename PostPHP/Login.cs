@@ -10,19 +10,19 @@ using System.Windows.Forms;
 
 namespace PostPHP
 	{
-	public partial class Login : Form
+	public partial class LoginForm : Form
 		{
 		public string user;
 		public string passwd;
 		public string key;
 		public string url;
 		
-		public Login()
+		public LoginForm()
 			{
 			InitializeComponent();
 			}
 
-		public Login(string usr, string pwd, string k, string u)
+		public LoginForm(string usr, string pwd, string k, string u)
 			{
 			InitializeComponent();
 			user = usr;
@@ -54,9 +54,20 @@ namespace PostPHP
 
 		private void bt_help_Click(object sender, EventArgs e)
 			{
-			MessageBox.Show("pippo antani 12345678901234567890123456789012 \npluto blinda 21098765432109876543210987654321"  );
+			//MessageBox.Show("pippo antani 12345678901234567890123456789012 \npluto blinda 21098765432109876543210987654321"  );
+            UserListDiag ul = new UserListDiag(this);
+            ul.Show();
 			}
-
+        public void SetUserData(string usr, string pwd, string k)
+            {
+            user = usr;
+            passwd = pwd;
+            key = k;
+            this.tb_user.Text = user;
+            this.tb_passwd.Text = passwd;
+            this.tb_key.Text = key;
+            Invalidate();
+            }
 		
 		}
 	}

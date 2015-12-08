@@ -359,7 +359,7 @@ namespace PostPHP
                 string dec_msg = DecryptMsg(this.phpmsg.rsp, ref bok,"*\n*");       // Decodifica il messaggio del login (compreso header prima di Newline)
                 string hdr = CutHeader(ref dec_msg, Environment.NewLine);           // Taglia l'header
 
-                System.Windows.Forms.MessageBox.Show("dec_msg=\n" + dec_msg + "\n" + dec_msg.Length);
+                //System.Windows.Forms.MessageBox.Show("dec_msg=\n" + dec_msg + "\n" + dec_msg.Length);
 
                 if (dec_msg.Length > 0)
                     {
@@ -475,7 +475,15 @@ namespace PostPHP
 			}
 		public string ConnectionMessages()							// Stringa con messaggio, risposta ed errori
 			{
-			return string.Format("Messaggio:\n{0}\n\nErrori:\n{1}\n\nRisposta:\n{2}", this.Message, this.ErrorMessages, this.Response);
+            string rt = "";
+            if (this.Message.Length > 0)
+                rt += this.Message + " ->\n";
+            if (this.Response.Length > 0)
+                rt += " -> " + this.Response + '\n';
+            if (this.ErrorMessages.Length > 0)
+                rt += "ERR: " + this.ErrorMessages;
+            //return string.Format("Messaggio:\n{0}\n\nErrori:\n{1}\n\nRisposta:\n{2}", this.Message, this.ErrorMessages, this.Response);
+            return rt;
 			}
 		public string QueueMessage()
 			{

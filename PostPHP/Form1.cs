@@ -42,13 +42,13 @@ namespace PostPHP
 
 			this.lb_queries.Items.Add("SELECT ID_att, Nome FROM att");
 			this.lb_queries.Items.Add("SELECT nome FROM att;");
-			this.lb_queries.Items.Add("SELECT aID, nome, dur FROM att WHERE dur>30;");
+			this.lb_queries.Items.Add("SELECT ID_att, nome, Durata FROM att WHERE Durata>30;");
 			this.lb_queries.Items.Add("SELECT * FROM att");
 			this.lb_queries.SelectedIndex = 0;
 			selected_query = (string)this.lb_queries.SelectedItem;
 			
-			this.lb_commands.Items.Add("INSERT INTO att(pos, nome, dur) VALUES ('3.0.1','extra',60)");
-			this.lb_commands.Items.Add("INSERT INTO att(aID, pos, nome, dur) VALUES (100,'3.0.1','extra',60)");
+			this.lb_commands.Items.Add("INSERT INTO att(Pos, nome, Durata) VALUES ('3.0.1','extra',60)");
+			this.lb_commands.Items.Add("INSERT INTO att(ID_att, Pos, nome, Durata) VALUES (100,'3.0.1','extra',60)");
 			this.lb_commands.SelectedIndex = 0;
 			selected_command = (string)this.lb_commands.SelectedItem;
 
@@ -156,7 +156,7 @@ namespace PostPHP
 			}
 		private void but_loginData_Click(object sender, EventArgs e)
 			{
-			Login lg = new Login(user,password,key,url);
+			LoginForm lg = new LoginForm(user,password,key,url);
 			if(lg.ShowDialog()==DialogResult.OK)
 				{
 				user = lg.user;
